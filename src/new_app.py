@@ -130,6 +130,7 @@ else:
             st.dataframe(df, width=100000, height=250)
             st.divider()
 
+    #Editor app starts here
     # draw the editor
     st.markdown('### Bauplan app')
 
@@ -153,14 +154,15 @@ else:
             st.markdown('No query to run. Please write a query and press Run.')
             st.stop()
 
-        if on:
-            query = f"""--bauplan: materialize=True\n{query}"""
-            # Create a temporary directory in which we will run a bauplan run
-            temp_dir = 'temp_dir'
-            # delete the folder if it already exists
-            if os.path.exists(temp_dir):
-                # If the folder exists, delete it
-                shutil.rmtree(temp_dir)
+    if on:
+        model_name = st.text_input('model name', )
+        query = f"""--bauplan: materialize=True\n{query}"""
+        # Create a temporary directory in which we will run a bauplan run
+        temp_dir = 'temp_dir'
+        # delete the folder if it already exists
+        if os.path.exists(temp_dir):
+            # If the folder exists, delete it
+            shutil.rmtree(temp_dir)
 
             os.makedirs(temp_dir)
             # Define the content of the yaml file and write it in the tempo folder
@@ -179,7 +181,17 @@ else:
             # Define the content of the Python file and write it in the temp folder
             models = query
 
-            with open(os.path.join(temp_dir, f"""query.sql"""), 'w') as file:
+            with open(os.path.join(temp_dir, f"""{model_name}.sql"""), 'w') as file:
                 file.write(models)
             # run a bauplan run
             run_dag(temp_dir, selected_branch)
+    else:
+        q_string_max = 30
+        q_string = '{} ...'.format(query[:q_string_max]) if len(query) > q_string_max else query
+        st.write('Running "{}" on branch "{}"'.format(q_string, selected_branch))
+        # we get the DF back in case we want to export it
+        results = query_and_display(query, selected_branch)
+        if results is None:
+            st.stop()
+        export = results.to_csv()
+        st.download_button(label="Download Results", data=export, file_name="query_results.csv")
