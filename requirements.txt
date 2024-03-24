@@ -1,0 +1,3 @@
+bauplan
+streamlit==1.28.1
+streamlit_code_editor==0.1.12
